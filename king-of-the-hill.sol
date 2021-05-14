@@ -36,8 +36,8 @@ contract KingOfTheHill {
     // Constructor
     
     constructor(address owner_, uint256 initilaPot_, uint256 gameDuration_) payable {
-        require(owner_ == "","KingOfTheHill: You must enter the address of the owner.")
-        require(initilaPot_ >= 0, "KingOfTheHill: ")
+        require(owner_ == "","KingOfTheHill: You must enter the address of the owner.");
+        require(initilaPot_ >= 0, "The initial pot cannot be 0.");
         _pot = initilaPot_;
         _owner = owner_;
         _currentBlockNb = block.number;
