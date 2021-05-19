@@ -24,8 +24,11 @@ contract KingOfTheHill {
     address private _temporaryKing;
     address private _king;
     uint256 private _seed;
+    uint256 private _profit;
     uint256 private _prize;
     uint256 private _currentBlockNb;
+    uint256 private _newGameDuration;
+    uint256 private _setGameDuration;
     
     // Events
     
@@ -35,13 +38,14 @@ contract KingOfTheHill {
     
     // Constructor
     
-    constructor(address owner_, uint256 initilaPot_, uint256 gameDuration_) payable {
-        require(initilaPot_ > 0, "The initial pot cannot be 0.");
-        require(gameDuration_ > 0, "The game duration cannot be 0.");
+    constructor(address owner_, uint256 initilaPot_, uint256 setGameDuration_) payable {
+        require(initilaPot_ > 0, "KingOfTheHill: The initial pot cannot be 0.");
+        require(setGameDuration_ > 0, "The game duration cannot be 0.");
         _pot = initilaPot_;
         _owner = owner_;
+        _setGameDuration = setGameDuration_;
         _currentBlockNb = block.number;
-        _gameDuration = _currentBlockNb + gameDuration_;
+        _gameDuration = _currentBlockNb + setGameDuration_;
     }
     
     // Modifier
@@ -54,27 +58,45 @@ contract KingOfTheHill {
     // Function declarations
     
     receive() external payable {
-        _bet(msg.sender, msg.value);
     }
     
-    function bet() external payable {
+    function bet() public payable {
+         if(block.number >= _gameDuration) {
+             win();
+         }
         require(msg.value > _pot * 2, "KingOfTheHill: You cannot bid for less than two times the pot.");
-        _bet(msg.sender, msg.value);
-        _pot += msg.value;
+        payable(msg.sender).sendValue(msg.value - (_pot * 2));
+        _pot += _pot * 2;
         _temporaryKing = msg.sender;
-        emit Transfered(msg.sender, msg.value);
+        emit Transfered(msg.sender, _pot * 2);
     }
     
     
-    function prize() public view returns(uint256) {
+    function win() public payable {
+        _prize = Prize();
+        _seed = Seed();
+        _profit = Seed();
+        payable(_temporaryKing).sendValue(_prize);
+        payable(_owner).sendValue(_profit);
+        emit Transfered(_temporaryKing, _prize);
+        emit Transfered(_owner, _profit);
+        _prize = 0;
+        _pot = 0;
+        _pot += _seed;
+        _newGameDuration = block.number + _setGameDuration;
+
+    }
+    //1000000000000000 : 1 finney
+    
+    function Prize() public view returns(uint256) {
         return _pot * 80 / 100;
     }
     
-    function seed() public view returns(uint256) {
-        return _pot - _prize / 2;
+    function Seed() public view returns(uint256) {
+        return (_pot - _prize) / 2;
     }
     
-    function pot() public view returns(uint256) {
+    function Pot() public view returns(uint256) {
         return _pot;
     }
     
